@@ -3,7 +3,6 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { User, Role, SuspiciousUser, Log } = require('../models');
-const activeOTPs = new Map();
 
 // A secret key for signing tokens (In production, this goes in a .env file!)
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_livrogrande_key_2026';
@@ -42,12 +41,10 @@ router.post('/register', async (req, res) => {
 });
 
 // --- BRONZE: Secure Login & Token Generation ---
-// 🥈 SILVER: Step 1 of 3-Way Auth (Check Password & Send OTP)
 router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     
-    // 1. Find User
     const user = await User.findOne({ 
       where: { username }, 
       include: [{ model: Role, as: 'role' }] 
@@ -55,52 +52,12 @@ router.post('/login', async (req, res) => {
     
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // 2. Check Password
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return res.status(401).json({ message: 'Invalid credentials' });
 
-    // 3. Generate a 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    // 4. Save it in memory for 5 minutes
-    activeOTPs.set(username, { otp, expires: Date.now() + 5 * 60 * 1000 });
-
-    // ☁️ CLOUD FIX: Render blocks outgoing email. Print OTP to console instead!
-    console.log(`\n=================================================`);
-    console.log(`🔐 MFA PASSCODE FOR [${username}]: ${otp}`);
-    console.log(`=================================================\n`);
-
-    // Tell the frontend to ask for the OTP instantly
-    res.status(200).json({ message: 'OTP Generated! Check Render Logs.', requiresOtp: true, username: user.username });
-  } catch (error) {
-    console.error("🔥 LOGIN CRASH:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// 🥈 SILVER: Step 2 of 3-Way Auth (Verify OTP & Issue Token)
-router.post('/verify-otp', async (req, res) => {
-  try {
-    const { username, otp } = req.body;
-    const record = activeOTPs.get(username);
-
-    // 1. Check if OTP exists, matches, and isn't expired
-    if (!record || record.expires < Date.now() || record.otp !== otp) {
-      return res.status(401).json({ message: "Invalid or expired OTP." });
-    }
-
-    // 2. OTP is correct! Delete it so it can't be reused
-    activeOTPs.delete(username);
-
-    // 3. Issue the real JWT Token
-    const user = await User.findOne({ 
-      where: { username }, 
-      include: [{ model: Role, as: 'role' }] 
-    });
-
     const token = jwt.sign(
       { id: user.id, role: user.role.name, roleId: user.roleId }, 
-      JWT_SECRET, // Make sure JWT_SECRET is defined at the top of your file!
+      JWT_SECRET,
       { expiresIn: '1h' }
     );
 

@@ -22,7 +22,6 @@ if (process.env.DATABASE_URL) {
     logging: false // This stops your live terminal from getting spammed with SQL queries
   });
 } 
-// Otherwise, fall back to your normal local settings
 else if (config.use_env_variable) {
   sequelize = new Sequelize(process.env[config.use_env_variable], config);
 } else {
