@@ -77,7 +77,18 @@ async function startServer() {
   // ☁️ CLOUD CHANGE: Build the database tables in Neon!
   await db.sequelize.sync({ alter: true });
   console.log('🐘 PostgreSQL Tables Synced!');
-  
+
+  const publisherCount = await db.Publisher.count();
+    if (publisherCount === 0) {
+      console.log('🌱 Database is empty! Seeding default publishers...');
+      await db.Publisher.bulkCreate([
+        { name: 'Penguin Books', location: 'New York' },
+        { name: 'HarperCollins', location: 'London' },
+        { name: 'Simon & Schuster', location: 'New York' }
+      ]);
+      console.log('✅ Publishers seeded!');
+    }
+
   // Prevent Jest from hanging
   if (process.env.NODE_ENV !== 'test') {
     server.listen(PORT, '0.0.0.0', () => {
