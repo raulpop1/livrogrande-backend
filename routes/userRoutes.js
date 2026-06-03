@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { User, Role, SuspiciousUser, Log } = require('../models');
+const { verifyToken, isAdmin } = require('../middleware/auth');
 
 // A secret key for signing tokens (In production, this goes in a .env file!)
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_livrogrande_key_2026';
@@ -71,7 +72,7 @@ router.post('/login', async (req, res) => {
 });
 
 // --- GOLD (From Assignment 3): Observation List Route ---
-router.get('/suspicious', async (req, res) => {
+router.get('/suspicious', verifyToken, isAdmin, async (req, res) => {
   try {
     const suspects = await SuspiciousUser.findAll({
       include: [{ model: User, as: 'user', attributes: ['username'] }]
@@ -83,7 +84,7 @@ router.get('/suspicious', async (req, res) => {
 });
 
 // --- GOLD (From Assignment 3): View Raw Logs Route ---
-router.get('/logs', async (req, res) => {
+router.get('/logs', verifyToken, isAdmin, async (req, res) => {
   try {
     const allLogs = await Log.findAll({ 
         order: [['createdAt', 'DESC']],

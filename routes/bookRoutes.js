@@ -30,8 +30,8 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
-// 3. CREATE A BOOK (Admins Only) --> THIS WAS MISSING!
-router.post('/', verifyToken, isAdmin, async (req, res) => {
+// 3. CREATE A BOOK (Normal Users & Admins)
+router.post('/', verifyToken, async (req, res) => {
   try {
     const book = await Book.create(req.body);
     res.status(201).json(book);
@@ -56,8 +56,8 @@ router.put('/:id', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// 5. DELETE A BOOK (Admins Only)
-router.delete('/:id', verifyToken, isAdmin, async (req, res) => {
+// 5. DELETE A BOOK (Normal Users & Admins)
+router.delete('/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const deleted = await Book.destroy({ where: { id } });
@@ -68,7 +68,7 @@ router.delete('/:id', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-router.post('/start-generator', verifyToken, isAdmin, async (req, res) => {
+router.post('/start-generator', verifyToken, async (req, res) => {
   try {
     // 1. Prevent multiple generators from running at the same time
     if (generatorInterval) clearInterval(generatorInterval);
@@ -105,7 +105,7 @@ router.post('/start-generator', verifyToken, isAdmin, async (req, res) => {
 });
 
 // --- LIVE GENERATOR (Stop) ---
-router.post('/stop-generator', verifyToken, isAdmin, (req, res) => {
+router.post('/stop-generator', verifyToken, (req, res) => {
   // If the timer is running, kill it!
   if (generatorInterval) {
     clearInterval(generatorInterval);
