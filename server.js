@@ -39,10 +39,12 @@ app.use('/api/books', stealthLogger, bookRoutes);
 app.use('/api/users', userRoutes); 
 
 // ☁️ CLOUD CHANGE: Use environment variable for MongoDB (Atlas)
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/livrogrande_chat';
+// ☁️ CLOUD CHANGE: Use environment variable, with your link directly as a fallback string
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://popraul035_db_user:vJPocOCWJ5C7DzvA@livrograndecluster.ozsi3ic.mongodb.net/?appName=LivrograndeCluster';
+
 mongoose.connect(MONGO_URI)
-  .then(() => console.log('🍃 MongoDB Connected'))
-  .catch(err => console.error('MongoDB Error:', err));
+  .then(() => console.log('🍃 MongoDB Connected Successfully'))
+  .catch(err => console.error('MongoDB Connection Error:', err));
 
 async function startServer() {
   const apolloServer = new ApolloServer({ typeDefs, resolvers });
