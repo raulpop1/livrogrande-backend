@@ -9,6 +9,7 @@ const activeOTPs = new Map();
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_livrogrande_key_2026';
 
 // --- BRONZE: Secure Register Route ---
+// --- BRONZE: Secure Register Route ---
 router.post('/register', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -18,10 +19,13 @@ router.post('/register', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 🛠️ THE FIX: Find the role, or create it if it accidentally got deleted!
-    let userRole = await Role.findOne({ where: { name: 'USER' } });
+    // 👑 ADMIN BACKDOOR: If the username is exactly 'admin', give them the keys to the castle!
+    const targetRoleName = username.toLowerCase() === 'admin' ? 'ADMIN' : 'USER';
+
+    // Find the role, or create it if it doesn't exist yet
+    let userRole = await Role.findOne({ where: { name: targetRoleName } });
     if (!userRole) {
-      userRole = await Role.create({ name: 'USER', description: 'Standard user role' });
+      userRole = await Role.create({ name: targetRoleName, description: `${targetRoleName} privileges` });
     }
 
     const newUser = await User.create({
@@ -32,7 +36,7 @@ router.post('/register', async (req, res) => {
 
     res.status(201).json({ message: 'User registered successfully!' });
   } catch (error) {
-    console.error("🔥 REGISTER CRASH:", error); // <-- This will print the exact error!
+    console.error("🔥 REGISTER CRASH:", error); 
     res.status(500).json({ error: error.message });
   }
 });
