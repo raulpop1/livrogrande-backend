@@ -9,6 +9,15 @@ router.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
+router.get('/publishers/list', async (req, res) => {
+  try {
+    const pubs = await Publisher.findAll();
+    res.json(pubs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // 2. GET ALL BOOKS (Normal Users & Admins)
 router.get('/', verifyToken, async (req, res) => {
   try {
