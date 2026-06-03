@@ -11,6 +11,8 @@ const mongoose = require('mongoose');
 const userRoutes = require('./routes/userRoutes'); 
 const Chat = require('./models/Chat');
 
+const db = require('./models');
+
 const app = express();
 
 // ☁️ CLOUD CHANGE: Create a standard HTTP server (Render adds the SSL on top automatically)
@@ -72,6 +74,10 @@ async function startServer() {
     });
   });
 
+  // ☁️ CLOUD CHANGE: Build the database tables in Neon!
+  await db.sequelize.sync({ alter: true });
+  console.log('🐘 PostgreSQL Tables Synced!');
+  
   // Prevent Jest from hanging
   if (process.env.NODE_ENV !== 'test') {
     server.listen(PORT, '0.0.0.0', () => {
