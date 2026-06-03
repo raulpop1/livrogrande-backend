@@ -39,8 +39,8 @@ app.use('/api/books', stealthLogger, bookRoutes);
 app.use('/api/users', userRoutes); 
 
 // ☁️ CLOUD CHANGE: Use environment variable for MongoDB (Atlas)
-// ☁️ CLOUD CHANGE: Use environment variable, with your link directly as a fallback string
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://popraul035_db_user:vJPocOCWJ5C7DzvA@livrograndecluster.ozsi3ic.mongodb.net/?appName=LivrograndeCluster';
+// ☁️ CLOUD CHANGE: Use environment variable, with your link directly as a fallback string with the NEW PASSWORD
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://popraul035_db_user:LivroGrande2026Password@livrograndecluster.ozsi3ic.mongodb.net/?appName=LivrograndeCluster';
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log('🍃 MongoDB Connected Successfully'))
