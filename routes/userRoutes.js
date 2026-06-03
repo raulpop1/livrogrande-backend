@@ -3,7 +3,6 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { User, Role, SuspiciousUser, Log } = require('../models');
-const nodemailer = require('nodemailer');
 const activeOTPs = new Map();
 
 // A secret key for signing tokens (In production, this goes in a .env file!)
@@ -62,26 +61,13 @@ router.post('/login', async (req, res) => {
     // 4. Save it in memory for 5 minutes
     activeOTPs.set(username, { otp, expires: Date.now() + 5 * 60 * 1000 });
 
-    // 5. Send the OTP Email via Nodemailer
-    const testAccount = await nodemailer.createTestAccount();
-    const transporter = nodemailer.createTransport({
-      host: testAccount.smtp.host,
-      port: testAccount.smtp.port,
-      secure: testAccount.smtp.secure,
-      auth: { user: testAccount.user, pass: testAccount.pass },
-    });
+    // ☁️ CLOUD FIX: Render blocks outgoing email. Print OTP to console instead!
+    console.log(`\n=================================================`);
+    console.log(`🔐 MFA PASSCODE FOR [${username}]: ${otp}`);
+    console.log(`=================================================\n`);
 
-    const info = await transporter.sendMail({
-      from: '"Livrogrande Security" <security@livrogrande.com>',
-      to: `${username}@example.com`,
-      subject: "Livrogrande: Your Login OTP",
-      html: `<p>Your secure login passcode is: <strong>${otp}</strong></p><p>This code expires in 5 minutes.</p>`
-    });
-
-    console.log("🔐 OTP EMAIL SENT! Click to view: ", nodemailer.getTestMessageUrl(info));
-
-    // Tell the frontend to ask for the OTP!
-    res.status(200).json({ message: 'OTP Sent', requiresOtp: true, username: user.username });
+    // Tell the frontend to ask for the OTP instantly
+    res.status(200).json({ message: 'OTP Generated! Check Render Logs.', requiresOtp: true, username: user.username });
   } catch (error) {
     console.error("🔥 LOGIN CRASH:", error);
     res.status(500).json({ error: error.message });
@@ -159,32 +145,17 @@ router.post('/forgot-password', async (req, res) => {
     // 1. Create a secure, temporary token that expires in 15 minutes
     const resetToken = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '15m' });
     
-    const frontendURL = process.env.FRONTEND_URL || 'https://172.20.10.2:5173';
+    // ☁️ CLOUD FIX: Use the true Vercel frontend URL
+    const frontendURL = process.env.FRONTEND_URL || 'http://localhost:5173';
     const resetLink = `${frontendURL}/reset-password?token=${resetToken}`;
 
-    // 3. Set up Ethereal (Fake developer email account)
-    const testAccount = await nodemailer.createTestAccount();
-    const transporter = nodemailer.createTransport({
-      host: testAccount.smtp.host,
-      port: testAccount.smtp.port,
-      secure: testAccount.smtp.secure,
-      auth: { user: testAccount.user, pass: testAccount.pass },
-    });
+    // ☁️ CLOUD FIX: Print the reset link to Render logs instead of trying to email it
+    console.log(`\n=================================================`);
+    console.log(`✉️ PASSWORD RESET LINK FOR [${username}]:`);
+    console.log(`${resetLink}`);
+    console.log(`=================================================\n`);
 
-    // 4. Send the email
-    const info = await transporter.sendMail({
-      from: '"Livrogrande Security" <security@livrogrande.com>',
-      to: `${username}@example.com`,
-      subject: "Livrogrande: Password Reset Request",
-      html: `<p>Hello ${username},</p>
-             <p>You requested a password reset. Click the link below to securely create a new password. This link expires in 15 minutes.</p>
-             <a href="${resetLink}">Reset My Password</a>`
-    });
-
-    // 5. Print the URL to view the email in your backend terminal!
-    console.log("✉️ EMAIL SENT! Click this link to view it: ", nodemailer.getTestMessageUrl(info));
-
-    res.status(200).json({ message: 'Recovery email sent! Check the backend terminal.' });
+    res.status(200).json({ message: 'Recovery link generated! Check the Render terminal.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
